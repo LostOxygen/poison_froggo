@@ -1,4 +1,11 @@
 # Byte-compiled / optimized / DLL files
+data/
+joblib/
+*.JPEG
+poison_frog/datasets/
+madry_data/
+model_saves/
+results/
 __pycache__/
 *.py[cod]
 *$py.class

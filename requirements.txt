@@ -1,0 +1,8 @@
+torch
+advertorch
+torchvision
+matplotlib>=3.4.0
+MulticoreTSNE
+imageio
+xlwt
+scikit-learn<=0.23
