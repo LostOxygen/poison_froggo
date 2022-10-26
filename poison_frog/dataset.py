@@ -2,6 +2,7 @@
    generating the poison to perturb the training data.
 """
 import os
+import copy
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -74,18 +75,18 @@ def get_data() -> DataLoader:
 
 
 def forward_step(model: nn.Sequential, img: torch.Tensor, target_image: torch.Tensor,
-                 lr: float) -> torch.Tensor:
+                 lr: float, target_logits) -> torch.Tensor:
     """helper function performing the forward step"""
-    img = img.detach() # disconnect image from the current autograd graph
-    img.requires_grad_()
+    img.detach_() # disconnect image from the current autograd graph
+    img.requires_grad = True
 
-    with torch.enable_grad():
-        logits = model(img)
-        target_logits = model(target_image)
-        loss = torch.norm(logits - target_logits)
+    logits = model(img)
+    loss = torch.norm(logits - target_logits)
+    model.zero_grad()
+    loss.backward()
 
-    gradient = torch.autograd.grad(loss, [img])[0]
-    perturbed_img = img - lr*gradient
+    img_grad = img.grad.data
+    perturbed_img = img - lr*img_grad
     return perturbed_img
 
 
@@ -296,7 +297,7 @@ def create_perturbed_dataset(target_class: int, new_class: int, attack_iters: in
                                                        learning_rate)
                 else:
                     new_image = forward_step(model, old_image, target_image,
-                                             learning_rate)
+                                             learning_rate, copy.deepcopy(target_feat_rep))
                 new_image = backward_step(new_image, old_image, learning_rate, beta)
 
                 # check stopping condition:  compute relative change in image between iterations
